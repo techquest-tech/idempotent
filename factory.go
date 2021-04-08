@@ -14,7 +14,7 @@ type Idempotent struct {
 }
 
 func GetIdempotentWithKeys(keys string, service IdempotentService) (*Idempotent, error) {
-	// service := NewInMemoryMap()
+	// service := service
 	key, err := NewIdempotent(keys)
 	if err != nil {
 		return nil, err
@@ -35,13 +35,13 @@ func GetIdempotentWithKeys(keys string, service IdempotentService) (*Idempotent,
 func (factory Idempotent) Duplicated(obj interface{}) (bool, error) {
 	idObj, ok := obj.(IdempotentKey)
 	if !ok {
-		if factory.Key != nil {
+		if factory.Key == nil {
 			return true, fmt.Errorf("failed to get key from object, %T not imple IdempotentKey", obj)
 		}
 
 		factory.Key.Target = obj
 		idObj = factory.Key
-		log.Debug("user default IdempotentKey for %T", obj)
+		log.Debugf("user default IdempotentKey for %T", obj)
 	}
 
 	id, err := idObj.IdempotentKey()

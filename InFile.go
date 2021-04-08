@@ -12,9 +12,9 @@ import (
 )
 
 type PersistedIdempotent struct {
-	File     string `defaults:".idempotent.txt"`
-	Batch    uint   `defaults:"100"`
-	Interval string `defaults:"10s"`
+	File     string `default:".idempotent.txt"`
+	Batch    uint   `default:"100"`
+	Interval string `default:"10s"`
 	Retry    uint   `default:"3"`
 	mem      *InMemoryMap
 	ch       chan interface{}
@@ -34,13 +34,14 @@ func (f *PersistedIdempotent) Init() error {
 		// lines= append(lines, sc.Text())
 		initCached[sc.Text()] = true
 	}
+	f.mem = NewInMemoryMap()
 	f.mem.cache = initCached
 	log.Info("load data from file done, file = ", f.File, " len = ", len(initCached))
 
 	defaults.Set(f)
 
 	b := gobatch.NewBatcher(f.flush)
-	b.MaxRetry = 3
+	b.MaxRetry = f.Retry
 	b.BatchSize = f.Batch
 	b.MaxWait, _ = time.ParseDuration(f.Interval)
 
