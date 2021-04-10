@@ -8,10 +8,13 @@ import (
 
 type DefaultIdempotentKey struct {
 	Target      interface{}
+	Keys        FuncKeys
 	KeysTmpl    string
 	IgnoreError bool
 	tmpl        *template.Template
 }
+
+type FuncKeys func(obj interface{}) (interface{}, error)
 
 func FormateDate(t time.Time) string {
 	return t.Format(time.RFC3339)
@@ -37,6 +40,9 @@ func NewIdempotent(keys string) (*DefaultIdempotentKey, error) {
 }
 
 func (d DefaultIdempotentKey) IdempotentKey() (interface{}, error) {
+	if d.Keys != nil {
+		return d.Keys(d.Target)
+	}
 
 	out := bytes.Buffer{}
 	err := d.tmpl.Execute(&out, d.Target)
