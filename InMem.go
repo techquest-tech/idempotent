@@ -20,6 +20,9 @@ func (mem *InMemoryMap) Duplicated(key interface{}) (bool, error) {
 	defer mem.mu.RUnlock()
 
 	_, ok := mem.cache[key]
+	if !ok {
+		mem.cache[key] = true
+	}
 	return ok, nil
 }
 
