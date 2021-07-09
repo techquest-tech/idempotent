@@ -1,6 +1,7 @@
 package idempotent_test
 
 import (
+	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -66,6 +67,8 @@ func TestDuplicatedFile(t *testing.T) {
 	assert.True(t, result)
 
 	os.Remove("test.txt")
+	all, _ := factory.Service.AllKeys()
+	fmt.Printf("%+v", all)
 }
 
 type TestMap map[string]interface{}
@@ -105,5 +108,8 @@ func TestMapDuplicated(t *testing.T) {
 	result, err = maptesting.Duplicated(obj2)
 	assert.Nil(t, err)
 	assert.True(t, result)
+
+	all, _ := maptesting.Service.AllKeys()
+	fmt.Printf("%+v\n", all)
 
 }

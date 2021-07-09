@@ -24,8 +24,22 @@ func (mem *InMemoryMap) Duplicated(key interface{}) (bool, error) {
 }
 
 func (mem *InMemoryMap) Save(key interface{}) error {
+	if key == nil {
+		log.Warn("key is nil, ignored")
+		return nil
+	}
 	mem.mu.Lock()
 	defer mem.mu.Unlock()
 	mem.cache[key] = true
 	return nil
+}
+
+func (mem *InMemoryMap) AllKeys() ([]interface{}, error) {
+	all := make([]interface{}, 0)
+
+	for k, _ := range mem.cache {
+		all = append(all, k)
+	}
+
+	return all, nil
 }

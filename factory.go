@@ -44,6 +44,10 @@ func NewIdempotent(service IdempotentService) (*Idempotent, error) {
 // }
 
 func (factory *Idempotent) Duplicated(obj interface{}) (bool, error) {
+	if obj == nil {
+		return true, nil
+	}
+
 	factory.mu.Lock()
 	defer factory.mu.Unlock()
 
@@ -72,6 +76,11 @@ func (factory *Idempotent) Duplicated(obj interface{}) (bool, error) {
 
 	default:
 		id = obj
+	}
+
+	if id == nil {
+		log.Warnf("key is nil for %+v", obj)
+		return true, nil
 	}
 
 	if err != nil {

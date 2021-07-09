@@ -67,6 +67,10 @@ func (f *PersistedIdempotent) Save(key interface{}) error {
 	return nil
 }
 
+func (f *PersistedIdempotent) AllKeys() ([]interface{}, error) {
+	return f.mem.AllKeys()
+}
+
 func (f *PersistedIdempotent) flush(ctx context.Context, queue []interface{}) error {
 	file, err := os.OpenFile(f.File, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
 	if err != nil {
