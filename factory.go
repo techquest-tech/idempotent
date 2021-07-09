@@ -48,9 +48,6 @@ func (factory *Idempotent) Duplicated(obj interface{}) (bool, error) {
 		return true, nil
 	}
 
-	factory.mu.Lock()
-	defer factory.mu.Unlock()
-
 	var id interface{}
 	var err error
 
@@ -87,6 +84,10 @@ func (factory *Idempotent) Duplicated(obj interface{}) (bool, error) {
 		log.Error("failed to get key from object, err ", err)
 		return true, err
 	}
+
+	factory.mu.Lock()
+	defer factory.mu.Unlock()
+
 	duplicated, err := factory.Service.Duplicated(id)
 	if err != nil {
 		log.Error("check duplicated failed. error: ", err)

@@ -2,6 +2,7 @@ package idempotent_test
 
 import (
 	"fmt"
+	"math/rand"
 	"os"
 	"testing"
 	"time"
@@ -111,5 +112,25 @@ func TestMapDuplicated(t *testing.T) {
 
 	all, _ := maptesting.Service.AllKeys()
 	fmt.Printf("%+v\n", all)
+
+}
+
+func BenchmarkIdempotent(b *testing.B) {
+	factory := &idempotent.Idempotent{
+		Service: idempotent.NewInMemoryMap(),
+	}
+
+	keylen := 100000000
+
+	for i := 0; i < b.N; i++ {
+		rnumber := rand.Intn(keylen)
+		_, err := factory.Duplicated(rnumber)
+		assert.Nil(b, err)
+	}
+
+	all, err := factory.Service.AllKeys()
+	assert.Nil(b, err)
+
+	assert.True(b, len(all) <= keylen)
 
 }

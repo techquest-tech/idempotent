@@ -1,12 +1,9 @@
 package idempotent
 
-import (
-	"sync"
-)
-
 type InMemoryMap struct {
-	mu    sync.RWMutex
-	cache map[interface{}]bool
+	// mu     sync.RWMutex
+	NoLock bool
+	cache  map[interface{}]bool
 }
 
 func NewInMemoryMap() *InMemoryMap {
@@ -15,9 +12,14 @@ func NewInMemoryMap() *InMemoryMap {
 	}
 }
 
+// func NewInMemoryMapWithoutLocker() *InMemoryMap {
+// 	return &InMemoryMap{
+// 		NoLock: true,
+// 		cache:  map[interface{}]bool{},
+// 	}
+// }
+
 func (mem *InMemoryMap) Duplicated(key interface{}) (bool, error) {
-	mem.mu.RLock()
-	defer mem.mu.RUnlock()
 
 	_, ok := mem.cache[key]
 	return ok, nil
@@ -28,8 +30,7 @@ func (mem *InMemoryMap) Save(key interface{}) error {
 		log.Warn("key is nil, ignored")
 		return nil
 	}
-	mem.mu.Lock()
-	defer mem.mu.Unlock()
+
 	mem.cache[key] = true
 	return nil
 }
@@ -37,7 +38,7 @@ func (mem *InMemoryMap) Save(key interface{}) error {
 func (mem *InMemoryMap) AllKeys() ([]interface{}, error) {
 	all := make([]interface{}, 0)
 
-	for k, _ := range mem.cache {
+	for k := range mem.cache {
 		all = append(all, k)
 	}
 
