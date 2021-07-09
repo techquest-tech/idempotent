@@ -55,11 +55,7 @@ func (f *PersistedIdempotent) Init() error {
 }
 
 func (f *PersistedIdempotent) Duplicated(key interface{}) (bool, error) {
-	result, err := f.mem.Duplicated(key)
-	if err == nil && !result {
-		f.ch <- key
-	}
-	return result, err
+	return f.mem.Duplicated(key)
 }
 func (f *PersistedIdempotent) Save(key interface{}) error {
 	err := f.mem.Save(key)
