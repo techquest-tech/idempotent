@@ -26,7 +26,7 @@ func TestDuplicated(t *testing.T) {
 
 	ram := idempotent.NewInMemoryMap()
 
-	factory, err := idempotent.GetIdempotentWithKeys(`{{ printf "%s-%s" .ID (.Now | FormateDate) }}`, ram)
+	factory, err := idempotent.NewIdempotentWithTemplate(`{{ printf "%s-%s" .ID (.Now | FormateDate) }}`, ram)
 	assert.Nil(t, err)
 
 	result, err := factory.Duplicated(obj)
@@ -66,4 +66,44 @@ func TestDuplicatedFile(t *testing.T) {
 	assert.True(t, result)
 
 	os.Remove("test.txt")
+}
+
+type TestMap map[string]interface{}
+
+func TestMapDuplicated(t *testing.T) {
+
+	maptesting, err := idempotent.NewIdempotentWithTemplate(`{{ .ID }}`, idempotent.NewInMemoryMap())
+
+	assert.Nil(t, err)
+
+	obj := map[string]interface{}{
+		"ID":   9999,
+		"body": "hello world",
+	}
+
+	result, err := maptesting.Duplicated(obj)
+	assert.Nil(t, err)
+	assert.False(t, result)
+
+	obj["other attribue"] = time.Now()
+
+	result, err = maptesting.Duplicated(obj)
+	assert.Nil(t, err)
+	assert.True(t, result)
+
+	obj["ID"] = 10000
+
+	result, err = maptesting.Duplicated(obj)
+	assert.Nil(t, err)
+	assert.False(t, result)
+
+	obj2 := TestMap{
+		"ID":   9999,
+		"Body": "it's another type",
+	}
+
+	result, err = maptesting.Duplicated(obj2)
+	assert.Nil(t, err)
+	assert.True(t, result)
+
 }

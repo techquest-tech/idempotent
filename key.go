@@ -20,7 +20,8 @@ func FormateDate(t time.Time) string {
 	return t.Format(time.RFC3339)
 }
 
-func NewIdempotent(keys string) (*DefaultIdempotentKey, error) {
+// use golang tempate as key value.
+func TemplateAsKey(keys string) (*DefaultIdempotentKey, error) {
 	out := &DefaultIdempotentKey{
 		KeysTmpl: keys,
 	}

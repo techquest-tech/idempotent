@@ -1,6 +1,10 @@
 package idempotent
 
-import "fmt"
+import (
+	"fmt"
+	"reflect"
+	"sync"
+)
 
 // type IdempotentType uint
 
@@ -9,18 +13,25 @@ import "fmt"
 // )
 
 type Idempotent struct {
+	mu      sync.RWMutex
 	Key     *DefaultIdempotentKey
 	Service IdempotentService
 }
 
-func GetIdempotentWithKeys(keys string, service IdempotentService) (*Idempotent, error) {
+func NewIdempotentWithTemplate(template string, service IdempotentService) (*Idempotent, error) {
 	// service := service
-	key, err := NewIdempotent(keys)
+	key, err := TemplateAsKey(template)
 	if err != nil {
 		return nil, err
 	}
 	return &Idempotent{
 		Key:     key,
+		Service: service,
+	}, nil
+}
+
+func NewIdempotent(service IdempotentService) (*Idempotent, error) {
+	return &Idempotent{
 		Service: service,
 	}, nil
 }
@@ -32,19 +43,37 @@ func GetIdempotentWithKeys(keys string, service IdempotentService) (*Idempotent,
 // 	}
 // }
 
-func (factory Idempotent) Duplicated(obj interface{}) (bool, error) {
-	idObj, ok := obj.(IdempotentKey)
-	if !ok {
-		if factory.Key == nil {
-			return true, fmt.Errorf("failed to get key from object, %T not imple IdempotentKey", obj)
+func (factory *Idempotent) Duplicated(obj interface{}) (bool, error) {
+	factory.mu.Lock()
+	defer factory.mu.Unlock()
+
+	var id interface{}
+	var err error
+
+	switch reflect.TypeOf(obj).Kind() {
+
+	case reflect.Array, reflect.Func, reflect.Chan, reflect.Slice:
+		err = fmt.Errorf("%s is not supported", reflect.TypeOf(obj).Kind())
+
+	case reflect.Struct, reflect.Map:
+
+		idObj, ok := obj.(IdempotentKey)
+		if !ok {
+			if factory.Key == nil {
+				return true, fmt.Errorf("failed to get key from object, %T not imple IdempotentKey", obj)
+			}
+
+			factory.Key.Target = obj
+			idObj = factory.Key
+			log.Debugf("user default IdempotentKey for %T", obj)
 		}
 
-		factory.Key.Target = obj
-		idObj = factory.Key
-		log.Debugf("user default IdempotentKey for %T", obj)
+		id, err = idObj.IdempotentKey()
+
+	default:
+		id = obj
 	}
 
-	id, err := idObj.IdempotentKey()
 	if err != nil {
 		log.Error("failed to get key from object, err ", err)
 		return true, err

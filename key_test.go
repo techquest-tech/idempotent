@@ -14,7 +14,7 @@ func TestKey(t *testing.T) {
 		"ID":  "Testing",
 		"Now": time.Now(),
 	}
-	idens, err := idempotent.NewIdempotent(`{{ printf "%s-%s" .ID (.Now | FormateDate) }}`)
+	idens, err := idempotent.TemplateAsKey(`{{ printf "%s-%s" .ID (.Now | FormateDate) }}`)
 	assert.Nil(t, err)
 	// t.Log("key:", keyvalue)
 
