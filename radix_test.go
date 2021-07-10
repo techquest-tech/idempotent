@@ -1,6 +1,7 @@
 package idempotent_test
 
 import (
+	"context"
 	"math/rand"
 	"testing"
 	"time"
@@ -23,7 +24,7 @@ func RandStringRunes(n int) string {
 	return string(b)
 }
 
-func GenerateData() {
+func TestGenerateData(t *testing.T) {
 	// r := iradix.New()
 	rt := idempotent.NewRadixTree()
 
@@ -32,15 +33,15 @@ func GenerateData() {
 		Service:  rt,
 		Interval: "5s",
 	}
-	test.Init()
+	test.Init(context.TODO())
 
 	for i := 0; i < 100000; i++ {
 		txt := RandStringRunes(64)
 		test.Save(txt)
 
 	}
-
-	time.Sleep(29 * time.Second)
+	context.TODO().Done()
+	time.Sleep(1 * time.Second)
 
 }
 
@@ -52,7 +53,7 @@ func TestKeys(t *testing.T) {
 		Service:  rt,
 		Interval: "5s",
 	}
-	test.Init()
+	test.Init(context.TODO())
 
 	result, err := test.Duplicated("kzutEpNCwjvqzSoDWNLisIdUSShCxJjeXExRHzoZcZfRIznoxRvytamxmxhTttQL")
 	assert.Nil(t, err)

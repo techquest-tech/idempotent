@@ -1,6 +1,7 @@
 package idempotent_test
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"testing"
@@ -53,7 +54,7 @@ func TestDuplicatedFile(t *testing.T) {
 		File:    "test.txt",
 		Service: idempotent.NewInMemoryMap(),
 	}
-	err := idd.Init()
+	err := idd.Init(context.TODO())
 	assert.Nil(t, err)
 
 	factory := &idempotent.Idempotent{

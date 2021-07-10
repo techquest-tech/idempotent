@@ -20,7 +20,7 @@ type PersistedIdempotent struct {
 	ch       chan interface{}
 }
 
-func (f *PersistedIdempotent) Init() error {
+func (f *PersistedIdempotent) Init(ctx context.Context) error {
 	if f.Service == nil {
 		return fmt.Errorf("parent service can't be empty, either InMemoryMap or Radix")
 	}
@@ -35,22 +35,16 @@ func (f *PersistedIdempotent) Init() error {
 	}
 	defer file.Close()
 	sc := bufio.NewScanner(file)
-	// initCached := map[interface{}]bool{}
 	for sc.Scan() {
-		// lines= append(lines, sc.Text())
-		// initCached[sc.Text()] = true
 		f.Service.Save(sc.Text())
 	}
-	// f.mem = NewInMemoryMap()
-	// f.mem.cache = initCached
-	// log.Info("load data from file done, file = ", f.File, " len = ", len(initCached))
 
 	b := gobatch.NewBatcher(f.Flush)
 	b.MaxRetry = f.Retry
 	b.BatchSize = f.Batch
 	b.MaxWait, _ = time.ParseDuration(f.Interval)
 
-	ch, err := b.Start(context.TODO())
+	ch, err := b.Start(ctx)
 	if err != nil {
 		return err
 	}
