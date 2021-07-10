@@ -2,7 +2,6 @@ package idempotent_test
 
 import (
 	"fmt"
-	"math/rand"
 	"os"
 	"testing"
 	"time"
@@ -51,7 +50,8 @@ func TestDuplicatedFile(t *testing.T) {
 		ID: "TestDuplicatedFile",
 	}
 	idd := idempotent.PersistedIdempotent{
-		File: "test.txt",
+		File:    "test.txt",
+		Service: idempotent.NewInMemoryMap(),
 	}
 	err := idd.Init()
 	assert.Nil(t, err)
@@ -120,17 +120,25 @@ func BenchmarkIdempotent(b *testing.B) {
 		Service: idempotent.NewInMemoryMap(),
 	}
 
-	keylen := 100000000
-
 	for i := 0; i < b.N; i++ {
-		rnumber := rand.Intn(keylen)
-		_, err := factory.Duplicated(rnumber)
+		rnumber := RandStringRunes(64)
+		dup, err := factory.Duplicated(rnumber)
 		assert.Nil(b, err)
+		assert.False(b, dup)
 	}
 
-	all, err := factory.Service.AllKeys()
-	assert.Nil(b, err)
+}
 
-	assert.True(b, len(all) <= keylen)
+func BenchmarkRadix(b *testing.B) {
+	factory := &idempotent.Idempotent{
+		Service: idempotent.NewRadixTree(),
+	}
+
+	for i := 0; i < b.N; i++ {
+		rnumber := RandStringRunes(64)
+		dup, err := factory.Duplicated(rnumber)
+		assert.Nil(b, err)
+		assert.False(b, dup)
+	}
 
 }
