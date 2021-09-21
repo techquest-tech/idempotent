@@ -1,6 +1,7 @@
 package idempotent
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"sync"
@@ -43,9 +44,9 @@ func NewIdempotent(service IdempotentService) (*Idempotent, error) {
 // 	}
 // }
 
-func (factory *Idempotent) Duplicated(obj interface{}) (bool, error) {
+func (factory *Idempotent) GetObjectKey(obj interface{}) (interface{}, error) {
 	if obj == nil {
-		return true, nil
+		return nil, errors.New("object is nil")
 	}
 
 	var id interface{}
@@ -82,9 +83,17 @@ func (factory *Idempotent) Duplicated(obj interface{}) (bool, error) {
 
 	if err != nil {
 		log.Error("failed to get key from object, err ", err)
+		return nil, err
+	}
+	return id, err
+}
+
+func (factory *Idempotent) Duplicated(obj interface{}) (bool, error) {
+
+	id, err := factory.GetObjectKey(obj)
+	if err != nil {
 		return true, err
 	}
-
 	factory.mu.Lock()
 	defer factory.mu.Unlock()
 
