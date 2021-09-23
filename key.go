@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"text/template"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 type DefaultIdempotentKey struct {
@@ -12,6 +14,7 @@ type DefaultIdempotentKey struct {
 	KeysTmpl    string
 	IgnoreError bool
 	tmpl        *template.Template
+	Logger      *zap.Logger
 }
 
 type FuncKeys func(obj interface{}) (interface{}, error)
@@ -24,6 +27,7 @@ func FormateDate(t time.Time) string {
 func TemplateAsKey(keys string) (*DefaultIdempotentKey, error) {
 	out := &DefaultIdempotentKey{
 		KeysTmpl: keys,
+		// Logger:   logger,
 	}
 
 	tp, err := template.New("idempotent").Funcs(template.FuncMap{
@@ -32,7 +36,7 @@ func TemplateAsKey(keys string) (*DefaultIdempotentKey, error) {
 
 	if err != nil {
 		// log.Fatal("key template error, ", err)
-		log.Error("key template error, ", err)
+		// logger.Error("key template error, ", zap.Any("error", err))
 		return nil, err
 	}
 
@@ -48,7 +52,7 @@ func (d DefaultIdempotentKey) IdempotentKey() (interface{}, error) {
 	out := bytes.Buffer{}
 	err := d.tmpl.Execute(&out, d.Target)
 	if err != nil {
-		log.Error("exec template error, ", err)
+		d.Logger.Error("exec template error, ", zap.Any("error", err))
 		return nil, err
 	}
 

@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"reflect"
 	"sync"
+
+	// "github.com/prometheus/common/log"
+	"go.uber.org/zap"
 )
 
 // type IdempotentType uint
@@ -17,6 +20,7 @@ type Idempotent struct {
 	mu      sync.RWMutex
 	Key     *DefaultIdempotentKey
 	Service IdempotentService
+	Logger  *zap.Logger
 }
 
 func NewIdempotentWithTemplate(template string, service IdempotentService) (*Idempotent, error) {
@@ -67,7 +71,8 @@ func (factory *Idempotent) GetObjectKey(obj interface{}) (interface{}, error) {
 
 			factory.Key.Target = obj
 			idObj = factory.Key
-			log.Debugf("user default IdempotentKey for %T", obj)
+			// log.Debugf("user default IdempotentKey for %T", obj)
+			factory.Logger.Debug("user default idempotent key", zap.Any("target", obj))
 		}
 
 		id, err = idObj.IdempotentKey()
@@ -77,12 +82,13 @@ func (factory *Idempotent) GetObjectKey(obj interface{}) (interface{}, error) {
 	}
 
 	if id == nil {
-		log.Warnf("key is nil for %+v", obj)
+		// log.Warnf("key is nil for %+v", obj)
+		factory.Logger.Warn("key is nil", zap.Any("target", obj))
 		return true, nil
 	}
 
 	if err != nil {
-		log.Error("failed to get key from object, err ", err)
+		factory.Logger.Error("failed to get key from object, err ", zap.Any("error", err))
 		return nil, err
 	}
 	return id, err
@@ -99,14 +105,14 @@ func (factory *Idempotent) Duplicated(obj interface{}) (bool, error) {
 
 	duplicated, err := factory.Service.Duplicated(id)
 	if err != nil {
-		log.Error("check duplicated failed. error: ", err)
+		factory.Logger.Error("check duplicated failed. error: ", zap.Any("error", err))
 		return true, err
 	}
 	if !duplicated {
-		log.Debug("new key found ", id)
+		factory.Logger.Debug("new key found ", zap.Any("id", id))
 		err = factory.Service.Save(id)
 		if err != nil {
-			log.Errorf("Idempotent check done, but failed when save key %s. err %v ", id, err)
+			factory.Logger.Error("Idempotent check done, but failed when save key", zap.Any("id", id), zap.Any("error", err))
 		}
 	}
 	return duplicated, err

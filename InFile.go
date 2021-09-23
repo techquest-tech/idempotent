@@ -9,6 +9,7 @@ import (
 
 	"github.com/creasty/defaults"
 	"github.com/techquest-tech/gobatch"
+	"go.uber.org/zap"
 )
 
 type PersistedIdempotent struct {
@@ -17,6 +18,7 @@ type PersistedIdempotent struct {
 	Interval string `default:"10s"`
 	Retry    uint   `default:"3"`
 	Service  IdempotentService
+	Logger   *zap.Logger
 	ch       chan interface{}
 }
 
@@ -30,7 +32,7 @@ func (f *PersistedIdempotent) Init(ctx context.Context) error {
 	file, err := os.OpenFile(f.File, os.O_RDONLY|os.O_CREATE, 0644)
 	if err != nil {
 		msg := fmt.Sprintf("create or open file error, file = %s, err = %v", f.File, err)
-		log.Error(msg)
+		f.Logger.Error(msg)
 		return err
 	}
 	defer file.Close()
@@ -80,7 +82,7 @@ func (f *PersistedIdempotent) Flush(ctx context.Context, queue []interface{}) er
 		txt := fmt.Sprintf("%s\n", item)
 		file.WriteString(txt)
 	}
-	log.Info("append to file done, len ", len(queue))
+	f.Logger.Info("append to file done", zap.Int("len", len(queue)))
 
 	return nil
 }

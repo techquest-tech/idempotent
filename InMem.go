@@ -1,9 +1,12 @@
 package idempotent
 
+import "go.uber.org/zap"
+
 type InMemoryMap struct {
 	// mu     sync.RWMutex
 	NoLock bool
 	cache  map[interface{}]bool
+	Logger *zap.Logger
 }
 
 func NewInMemoryMap() *InMemoryMap {
@@ -27,7 +30,7 @@ func (mem *InMemoryMap) Duplicated(key interface{}) (bool, error) {
 
 func (mem *InMemoryMap) Save(key interface{}) error {
 	if key == nil {
-		log.Warn("key is nil, ignored")
+		mem.Logger.Warn("key is nil, ignored")
 		return nil
 	}
 

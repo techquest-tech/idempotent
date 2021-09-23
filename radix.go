@@ -16,7 +16,7 @@ func NewRadixTree() *RadixTree {
 
 func (rt *RadixTree) Init() {
 	rt.r = iradix.New()
-	log.Info("radix tree inited.")
+	// rt.Logger.Info("radix tree inited.")
 
 }
 
